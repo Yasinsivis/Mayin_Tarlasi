@@ -1,72 +1,81 @@
+import java.util.Arrays;
+import java.util.Random;
 import java.util.Scanner;
 
 public class MineSweeper {
-    String Board[][];
-    String MinedBoard[][];
-    int line = 0, column = 0;
+    private String[][] board;
+    private String[][] minedBoard;
+    private int rowSize, columnSize;
+    private boolean isGameInProgress;
+    private Scanner scanner;
 
-    boolean gamecontrol = true;
+    public void initializeVariables() {
+        scanner = new Scanner(System.in);
+        isGameInProgress = true;
+    }
 
-    Scanner scanner = new Scanner(System.in);
+    public void initializeGame() {
+        initializeVariables();
+        board = createBoard();
+        minedBoard = Arrays.stream(board)
+                .map(String[]::clone)
+                .toArray(String[][]::new);
 
-    public void Run() {
-
-
-        System.out.printf("Lütfen Satır Giriniz:");
-        line = scanner.nextInt();
-        System.out.printf("Lütfen Sütun Giriniz:");
-        column = scanner.nextInt();
-
-        if (line > 0 && column > 0) {
-
-            Board = new String[line][column];
-            MinedBoard = new String[line][column];
-
-
-            for (int i = 0; i < line; i++) {
-                for (int j = 0; j < column; j++) {
-                    Board[i][j] = "-";
-                    MinedBoard[i][j] = "-";
-                }
-            }
-
-        } else {
-            System.out.println("Lütfen 0'dan büyük rakamlar giriniz!!");
-            System.out.printf("Lütfen Satır Giriniz:");
-            line = scanner.nextInt();
-            System.out.printf("Lütfen Sütun Giriniz:");
-            column = scanner.nextInt();
-        }
-
-        ShowBoard(Board);
+        showBoard(board);
         System.out.println("----------------------------------------");
-        addMine(MinedBoard);
-        Answer(MinedBoard);
+        addMine(minedBoard);
+        startGame();
+    }
 
+    public String[][] createBoard() {
+        String[][] board;
+         do {
+             System.out.print("Lütfen Satır Giriniz:");
+             rowSize = scanner.nextInt();
+             System.out.print("Lütfen Sütun Giriniz:");
+             columnSize = scanner.nextInt();
+
+             if (rowSize <= 0 || columnSize <= 0) {
+                 System.out.println("Lütfen 0'dan büyük rakamlar giriniz!!");
+             } else{
+                 break;
+             }
+         } while (true);
+
+        board = new String[rowSize][columnSize];
+        for (int i = 0; i < rowSize; i++) {
+            for (int j = 0; j < columnSize; j++) {
+                board[i][j] = "-";
+            }
+        }
+        return board;
     }
 
 
-    public void addMine(String arr[][]) {
-        int mine = (line * column) / 4; //
+
+
+    public void addMine(String[][] arr) {
+        int mine = (rowSize * columnSize) / 4; //
+        Random random = new Random();
+        int randRow;
+        int randColumn;
+
         for (int i = 0; i < mine; i++) {
-            int randLine = (int) (Math.random() * line);
-            int randColumn = (int) (Math.random() * column);
+            do {
+                randRow = random.nextInt(rowSize);
+                randColumn = random.nextInt(columnSize);
+            } while (arr[randRow][randColumn].equals("*"));
 
-            while (arr[randLine][randColumn].equals("*")) {
-                randLine = (int) (Math.random() * line);
-                randColumn = (int) (Math.random() * column);
-            }
-
-            arr[randLine][randColumn] = "*";
+            arr[randRow][randColumn] = "*";
         }
     }
 
-    public int countMind(int lines1, int columns1) {
+    public int countMine(int row, int column) {
         int point = 0;
-        for (int i = -1; i <= +1; i++) {
-            for (int j = -1; j <= +1; j++) {
-                if (lines1 + i >= 0 && lines1 + i < line && columns1 + j >= 0 && columns1 + j < column) {
-                    if (MinedBoard[lines1 + i][columns1 + j].equals("*")) {
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if (row + i >= 0 && row + i < rowSize && column + j >= 0 && column + j < columnSize) {
+                    if (minedBoard[row + i][column + j].equals("*")) {
                         point++;
                     }
                 }
@@ -76,59 +85,50 @@ public class MineSweeper {
     }
 
     public void checkWin() {
-        for (int i = 0; i < Board.length; i++) {
-            for (int j = 0; j < Board[i].length; j++) {
-                if (MinedBoard[i][j].equals("-")) {
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (minedBoard[i][j].equals("-")) {
                     return;
                 }
             }
         }
-        ShowBoard(MinedBoard);
+        showBoard(minedBoard);
         System.out.println("Tebrikler Oyunu Kazandınız.");
-        gamecontrol = false;
+        isGameInProgress = false;
     }
 
-    public void Answer(String arr[][]) {
-        int line1 = 0, column1 = 0;
-        while (gamecontrol) {
-
-
+    public void startGame() {
+        int selectedRow, selectedColumn;
+        while (isGameInProgress) {
             System.out.println("Lütfen Seçmek istediğiniz Satırı Giriniz:");
-            line1 = scanner.nextInt();
+            selectedRow = scanner.nextInt();
             System.out.println("Lütfen Seçmek istediğiniz Sütunu Giriniz:");
-            column1 = scanner.nextInt();
+            selectedColumn = scanner.nextInt();
 
-
-            if (line1 >= 0 && line1 < arr.length && column1 >= 0 && column1 < arr[line1].length) {
-
-                if (arr[line1][column1].equals("*")) {
-                    gamecontrol = false;
+            if ((selectedRow >= 0 && minedBoard.length > selectedRow  ) && (selectedColumn >= 0 && minedBoard[selectedRow].length > selectedColumn )) {
+                if (minedBoard[selectedRow][selectedColumn].equals("*")) {
+                    isGameInProgress = false;
                     System.out.println("Game Over");
-                    ShowBoard(MinedBoard);
+                    showBoard(this.minedBoard);
                 } else {
-                    int point = countMind(line1, column1);
-                    Board[line1][column1] = String.valueOf(point);
-                    MinedBoard[line1][column1] = String.valueOf(point);
+                    int point = countMine(selectedRow, selectedColumn);
+                    board[selectedRow][selectedColumn] = String.valueOf(point);
+                    this.minedBoard[selectedRow][selectedColumn] = String.valueOf(point);
                     checkWin();
-                    if (gamecontrol != false) {
-                        ShowBoard(Board);
+                    if (isGameInProgress) {
+                        showBoard(board);
                     }
-
                 }
-
             } else {
                 System.out.println("Lütfen geçersiz bir değer girmeyiniz!");
             }
-
-
         }
-
     }
 
 
-    public void ShowBoard(String dizi[][]) {
-        for (int i = 0; i < line; i++) {
-            for (int j = 0; j < column; j++) {
+    public void showBoard(String[][] dizi) {
+        for (int i = 0; i < rowSize; i++) {
+            for (int j = 0; j < columnSize; j++) {
                 System.out.print(dizi[i][j] + " ");
             }
             System.out.println();
